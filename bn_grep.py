@@ -27,6 +27,7 @@ def get_args():
     parser.add_argument('-lA', '--l-after',
         help='Number of lines after the ocurrence of pattern.',
         type=int)
+    parser.add_argument('-x', '--exclude-paths', help='Comma separated list of paths to exclude from the search.')
     parser.add_argument('regex', help='The expression to find.')
     return parser.parse_args()
 
@@ -45,7 +46,12 @@ def main():
         lB = args.l_before
     if args.l_after:
         lA = args.l_after
+    blacklist = []
+    if args.exclude_paths:
+        blacklist = args.exclude_paths.split(',')
     for root, dirs, files in os.walk(dir):
+        if root in blacklist:
+            continue
         for fname in files:
             if fname_pattern.match(fname):
                 try:
