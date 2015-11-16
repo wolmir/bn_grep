@@ -27,7 +27,7 @@ def colorize(line_nos, line_no, snippet, m_obj, term):
             m_start = m_obj.start()
             m_end = m_obj.end()
             line += code[:m_start]
-            line += term.green(code[m_start:m_end])
+            line += term.bold_green(code[m_start:m_end])
             line += code[m_end:]
         else:
             line += ' ' + code
