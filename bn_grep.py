@@ -4,11 +4,35 @@ import re
 import argparse
 
 
+from blessings import Terminal
+from colorama import init
+
+
+init()
+
+
 def pretty_print(content):
     print "   |---"
     for line in content.split('\n'):
         print '   | ' + line
     print "   |"
+
+
+def colorize(line_nos, line_no, snippet, m_obj, term):
+    txt = []
+    for no, code in zip(line_nos, snippet):
+        line = str(no)
+        if no == line_no:
+            line = term.green(str(no)) + ' '
+            m_start = m_obj.start()
+            m_end = m_obj.end()
+            line += code[:m_start]
+            line += term.green(code[m_start:m_end])
+            line += code[m_end:]
+        else:
+            line += ' ' + code
+        txt.append(line)
+    return txt
 
 def get_args():
     parser = argparse.ArgumentParser()
@@ -32,6 +56,7 @@ def get_args():
     return parser.parse_args()
 
 def main():
+    term = Terminal()
     args = get_args()
     dir = '.'
     if args.path:
@@ -59,34 +84,38 @@ def main():
                     with open(file_path, 'r') as source_file:
                         contents = source_file.read()
                         if pattern.search(contents):
-                            print "--- " + file_path + ':'
+                            print term.bold("\n--- " + file_path + ':')
                             content_lines = contents.split('\n')
                             for line_no in range(len(content_lines)):
-                                if pattern.search(content_lines[line_no] + '\n'):
+                                m_obj = pattern.search(
+                                    content_lines[line_no] + '\n')
+                                if m_obj:
                                     start = max(line_no - lB, 0)
-                                    end = min(line_no + lA, len(content_lines) - 1)
+                                    end = min(line_no + lA + 1, len(content_lines) - 1)
                                     line_nos = range(start, end)
                                     snippet = content_lines[start:end]
-                                    snippet_with_line_nos = [str(x[0]) + ' ' + x[1] for x in zip(line_nos, snippet)]
-                                    pretty_print('\n'.join(snippet_with_line_nos))
-                            # re_matches = pattern.finditer(contents)
-                            # for match in re_matches:
-                            #     nb, na = 0, 0
-                            #     if args.n_before:
-                            #         nb = args.n_before
-                            #     if args.n_after:
-                            #         na = args.n_after
-                            #     start = max(match.start() - nb, 0)
-                            #     end = min(match.end() + na, len(contents) - 1)
-                            #     substring = contents[start : end]
-                            #     pretty_print(substring)
+                                    # snippet_with_line_nos = [str(x[0]) + ' ' + x[1] for x in zip(line_nos, snippet)]
+                                    csnippet = colorize(
+                                        line_nos,
+                                        line_no,
+                                        snippet,
+                                        m_obj,
+                                        term
+                                    )
+                                    pretty_print('\n'.join(csnippet))
                 except IOError as e:
                     print e
 
 
 def print_exit_msg():
+    term = Terminal()
     print "\n\nEnd of Line.\n\n"
-    print "                     <bn />"
+    print (
+        "                     " +
+        term.bold(term.green("<")) +
+        "bn" +
+        term.bold(term.green("/>"))
+    )
     print "                Benito-Nemitz Inc."
 
 
